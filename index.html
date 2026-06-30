@@ -1166,38 +1166,54 @@
       }
 
       btn.textContent = 'Sending...';
-      btn.disabled = true;
+btn.disabled = true;
 
-      fetch(API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from_name:  name,
-          from_email: email,
-          service:    service,
-          message:    msg,
-          website:    '', // honeypot — always empty for real users
-        }),
-      })
-      .then(async res => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Server error');
-        // Success
-        btn.textContent = '✓ Message Sent!';
-        btn.style.background = 'linear-gradient(135deg,#07CA6B,#059c53)';
-        document.getElementById('contactForm').reset();
-        setTimeout(() => {
-          btn.textContent = 'Send Message →';
-          btn.style.background = '';
-          btn.disabled = false;
-        }, 3500);
-      })
-      .catch(err => {
-        btn.textContent = err.message || 'Failed — try again';
-        btn.style.background = 'linear-gradient(135deg,#EA2143,#c41535)';
-        btn.disabled = false;
-        setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; }, 3500);
-      });
+// Wake up the server first then send
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+// Show waking message after 4 seconds if still waiting
+const wakingMsg = setTimeout(() => {
+  btn.textContent = 'Waking server... please wait ⏳';
+}, 4000);
+
+fetch(API_URL, {
+  method:  'POST',
+  headers: { 'Content-Type': 'application/json' },
+  signal:  controller.signal,
+  body: JSON.stringify({
+    from_name:  name,
+    from_email: email,
+    service:    service,
+    message:    msg,
+    website:    '',
+  }),
+})
+.then(async res => {
+  clearTimeout(timeout);
+  clearTimeout(wakingMsg);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Server error');
+  btn.textContent = '✓ Message Sent!';
+  btn.style.background = 'linear-gradient(135deg,#07CA6B,#059c53)';
+  document.getElementById('contactForm').reset();
+  setTimeout(() => {
+    btn.textContent = 'Send Message →';
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 3500);
+})
+.catch(err => {
+  clearTimeout(timeout);
+  clearTimeout(wakingMsg);
+  const msg2 = err.name === 'AbortError'
+    ? 'Timeout — please try again'
+    : err.message || 'Failed — try again';
+  btn.textContent = msg2;
+  btn.style.background = 'linear-gradient(135deg,#EA2143,#c41535)';
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = 'Send Message →'; btn.style.background = ''; }, 4000);
+});
     }
 
     // ── PORTFOLIO: dynamic render from localStorage ──
