@@ -882,7 +882,7 @@
         <button class="port-filter" onclick="filterPort('design',this)">Design</button>
       </div>
 
-      <!-- Rendered dynamically from localStorage (managed via admin.html) -->
+      <!-- Rendered from static PROJECTS data below -->
       <div class="portfolio-grid" id="portfolioGrid"></div>
     </div>
   </section>
@@ -1214,11 +1214,14 @@ fetch(API_URL, {
 });
     }
 
-    // ── PORTFOLIO: dynamic render from localStorage ──
-    const STORAGE_KEY = 'groo_projects';
+    // ── PORTFOLIO: static project data ──
+    // Paste your exported projects JSON array here (from admin → Export)
+    const PROJECTS = [
+      // { id:"proj_1", type:"video", name:"...", subtitle:"...", status:"live", featured:"true", videoUrl:"...", thumb:"", webUrl:"", img:"", notes:"" },
+    ];
+
     function getProjects() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-      catch { return []; }
+      return PROJECTS;
     }
 
     let activePortFilter = 'all';
@@ -1233,7 +1236,7 @@ fetch(API_URL, {
 
       if (!projects.length) {
         grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:48px 0;color:rgba(255,255,255,.3);font-size:.9rem;">
-          No featured projects yet. <a href="admin.html" style="color:var(--primary);">Add projects in the admin →</a></div>`;
+          No featured projects yet.</div>`;
         return;
       }
 
